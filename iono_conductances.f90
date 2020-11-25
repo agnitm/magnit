@@ -2456,7 +2456,7 @@ subroutine ionosphere_conductance(Sigma0, SigmaH, SigmaP,               &
 
               SigmaP(i,j) = sqrt(SigmaP_EUV + SigmaP_Particles)
 
-              !if (iModel.eq.8) then
+              ! New sources of precipitation converted into conductance...
               ! Add Ion Precipitation to Conductance using
               ! Galand and Richmond (2001)
               SigmaP_Ion = 5.7  *                     &
@@ -2486,7 +2486,6 @@ subroutine ionosphere_conductance(Sigma0, SigmaH, SigmaP,               &
               SigmaP(i,j) = sqrt(SigmaP_EUV + &
                    SigmaP_Particles + &
                    SigmaP_Ion) + SigmaP_BBd
-              !end if
               
            enddo
 
