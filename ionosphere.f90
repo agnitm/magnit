@@ -635,7 +635,7 @@ subroutine ionosphere_write_output(iFile, iBlock)
         case(uam_vars)                             !^CFG  IF TIEGCM
            write(iUnit, '(I5,a)')  9, ' nvars'     !^CFG  IF TIEGCM
         case(aur_vars)
-           write(iUnit, '(I5,a)') 15, ' nvars'
+           write(iUnit, '(I5,a)') 27, ' nvars'
         case(xyz_vars)
            write(iUnit, '(I5,a)') 21, ' nvars'
         end select
@@ -711,6 +711,18 @@ subroutine ionosphere_write_output(iFile, iBlock)
            write(iUnit, '(I5,a)') 13, ' IonNumFlux [/cm2/s]'
            write(iUnit, '(I5,a)') 14, ' conjugate dLat [deg]'
            write(iUnit, '(I5,a)') 15, ' conjugate dLon [deg]'
+           write(iUnit, '(I5,a)') 16, ' Diff_E-Flux [W/m2]'
+           write(iUnit, '(I5,a)') 17, ' Diff_N-Flux [/cm2/s]'
+           write(iUnit, '(I5,a)') 18, ' Diff_Ave-E [keV]'
+           write(iUnit, '(I5,a)') 19, ' Mono_E-Flux [W/m2]'
+           write(iUnit, '(I5,a)') 20, ' Mono_N-Flux [/cm2/s]'
+           write(iUnit, '(I5,a)') 21, ' Mono_Ave-E [keV]'
+           write(iUnit, '(I5,a)') 22, ' IDif_E-Flux [W/m2]'
+           write(iUnit, '(I5,a)') 23, ' IDif_N-Flux [/cm2/s]'
+           write(iUnit, '(I5,a)') 24, ' IDif_Ave-E [keV]'
+           write(iUnit, '(I5,a)') 25, ' Bbnd_E-Flux [W/m2]'
+           write(iUnit, '(I5,a)') 26, ' Bbnd_N-Flux [/cm2/s]'
+           write(iUnit, '(I5,a)') 27, ' Bbnd_Ave-E [keV]'
 
         case(xyz_vars)
            write(iUnit, '(I5,a)')  1, ' Theta [deg]'
@@ -806,6 +818,18 @@ subroutine ionosphere_write_output(iFile, iBlock)
            write(iUnit, *)  ' "IonNumFlux [/cm^2/s]"'
            write(iUnit, *)  ' "conjugate dLat [deg]"'
            write(iUnit, *)  ' "conjugate dLon [deg]"'
+           write(iUnit, *)  ' "Diff_E-Flux [W/m^2]"'
+           write(iUnit, *)  ' "Diff_N-Flux [/cm^2/s]"'
+           write(iUnit, *)  ' "Diff_Ave-E [keV]"'
+           write(iUnit, *)  ' "Mono_E-Flux [W/m^2]"'
+           write(iUnit, *)  ' "Mono_N-Flux [/cm^2/s]"'
+           write(iUnit, *)  ' "Mono_Ave-E [keV]"'
+           write(iUnit, *)  ' "IDif_E-Flux [W/m^2]"'
+           write(iUnit, *)  ' "IDif_N-Flux [/cm^2/s]"'
+           write(iUnit, *)  ' "IDif_Ave-E [keV]"'
+           write(iUnit, *)  ' "Bbnd_E-Flux [W/m^2]"'
+           write(iUnit, *)  ' "Bbnd_N-Flux [/cm^2/s]"'
+           write(iUnit, *)  ' "Bbnd_Ave-E [keV]"'
 
         elseif (variables == xyz_vars) then
            write(iUnit, *)  'VARIABLES= "Theta [deg]","Psi [deg]"'
@@ -883,7 +907,7 @@ subroutine ionosphere_write_output(iFile, iBlock)
      elseif (variables == aur_vars) then
         do j = 1, IONO_nPsi
            do i = 1, IONO_nTheta
-              write(iUnit,fmt="(15(E13.5))")  &
+              write(iUnit,fmt="(27(E13.5))")  &
                    cRadToDeg*IONO_NORTH_Theta(i,j), &
                    cRadToDeg*IONO_NORTH_Psi(i,j), &
                    IONO_NORTH_SigmaH(i,j),IONO_NORTH_SigmaP(i,j), &
@@ -895,7 +919,15 @@ subroutine ionosphere_write_output(iFile, iBlock)
                    1.0e03*IONO_NORTH_Joule(i,j), &
                    1.0e-04*IONO_NORTH_IonNumFlux(i,j), &
                    IONO_NORTH_dLat(i,j), &
-                   IONO_NORTH_dLon(i,j)
+                   IONO_NORTH_dLon(i,j), &
+                   IONO_NORTH_DIFF_EFlux(i,j), & ! Source 1 - Diffuse
+                   IONO_NORTH_DIFF_NFlux(i,j), IONO_NORTH_DIFF_Ave_E(i,j), &
+                   IONO_NORTH_MONO_EFlux(i,j), & ! Source 2 - Monoenergetic
+                   IONO_NORTH_MONO_NFlux(i,j), IONO_NORTH_MONO_Ave_E(i,j), &
+                   IONO_NORTH_IDIF_EFlux(i,j), & ! Source 3 - Ion Diffuse
+                   IONO_NORTH_IDIF_NFlux(i,j), IONO_NORTH_IDIF_Ave_E(i,j), &
+                   IONO_NORTH_BBND_EFlux(i,j), & ! Source 4 - Broadband
+                   IONO_NORTH_BBND_NFlux(i,j), IONO_NORTH_BBND_Ave_E(i,j)
            end do
         end do
 
@@ -993,7 +1025,7 @@ subroutine ionosphere_write_output(iFile, iBlock)
      elseif (variables == aur_vars) then
         do j = 1, IONO_nPsi
            do i = 1, IONO_nTheta
-              write(iUnit,fmt="(15(E13.5))")  &
+              write(iUnit,fmt="(27(E13.5))")  &
                    cRadToDeg*IONO_SOUTH_Theta(i,j), &
                    cRadToDeg*IONO_SOUTH_Psi(i,j), &
                    IONO_SOUTH_SigmaH(i,j),IONO_SOUTH_SigmaP(i,j), &
@@ -1005,7 +1037,15 @@ subroutine ionosphere_write_output(iFile, iBlock)
                    1.0e03*IONO_SOUTH_Joule(i,j), &
                    1.0e-04*IONO_SOUTH_IonNumFlux(i,j), &
                    IONO_SOUTH_dLat(i,j), &
-                   IONO_SOUTH_dLon(i,j)
+                   IONO_SOUTH_dLon(i,j), &
+                   IONO_SOUTH_DIFF_EFlux(i,j), & ! Source 1 - Diffuse
+                   IONO_SOUTH_DIFF_NFlux(i,j), IONO_SOUTH_DIFF_Ave_E(i,j), &
+                   IONO_SOUTH_MONO_EFlux(i,j), & ! Source 2 - Monoenergetic
+                   IONO_SOUTH_MONO_NFlux(i,j), IONO_SOUTH_MONO_Ave_E(i,j), &
+                   IONO_SOUTH_IDIF_EFlux(i,j), & ! Source 3 - Ion Diffuse
+                   IONO_SOUTH_IDIF_NFlux(i,j), IONO_SOUTH_IDIF_Ave_E(i,j), &
+                   IONO_SOUTH_BBND_EFlux(i,j), & ! Source 4 - Broadband
+                   IONO_SOUTH_BBND_NFlux(i,j), IONO_SOUTH_BBND_Ave_E(i,j)
            end do
         end do
 

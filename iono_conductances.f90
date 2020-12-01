@@ -56,7 +56,7 @@ subroutine FACs_to_fluxes(iModel, iBlock)
        iono_Ni, iono_Ti, ion_ave_e, ion_eflux, poynting
   real, dimension(IONO_nPsi) :: OCFLB, EquatorwardEdge, Smooth, OCFLB_s, beta
   real :: MulFac_Dae, MulFac_Def, var_rm, var_tot, numerator, denominator, &
-       rm, vari, numflux_floor
+       rm, vari, numflux_floor, DIFF_LCF, MONO_LCF, IDIF_LCF, BBND_LCF
   !real, dimension(IONO_nTheta,IONO_nPsi) :: nDen, &
   !     discrete_k, discrete_ae, discrete_ef, diffuse_ae, diffuse_ef, &
   !     iono_Ne, iono_T, discrete_nf, diffuse_nf, eV
@@ -971,6 +971,12 @@ subroutine FACs_to_fluxes(iModel, iBlock)
      MulFac_ef = 0.3e6! * 1e03
      MulFac_ae = 3.65e-12
 
+     ! Loss Cone Factors
+     DIFF_LCF = 1.0
+     MONO_LCF = 1.0
+     IDIF_LCF = 1.0
+     BBND_LCF = 1.0
+
      ! Warning Message
      write(*,*) '################## CAUTION ##################'
      write(*,*) '(Beta Testing) The conductance calculations from MAGNIT are unstable.'
@@ -1123,8 +1129,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         iono_T = iono_north_ave_e * 1e03 * 1.1e04! * 1./6.
         ! Energy Flux
         iono_north_eflux = iono_Ne * 1.38e-23 * 1e06 * &
-             1553.5632  * iono_T**1.5 !* &
-             !0.4 ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
+             1553.5632  * iono_T**1.5 * &
+             DIFF_LCF ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
 
         if (DoTest) then
            write(*,*) 'N_Diff: MaxVal Ave_E (in keV)', maxval(iono_north_ave_e)
@@ -1178,10 +1184,13 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         !write(*,*) 'MaxVal Temperature (in K)', maxval(iono_T)
         ! Energy Flux
         ion_eflux = iono_Ni * 1.38e-23 * 1e06 * &
-             36.26531 * iono_Ti**1.5 * 0.4!* &
-        !     !0.5 ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
+             36.26531 * iono_Ti**1.5 * &
+             IDIF_LCF! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
         !write(*,*) 'N_Diff: MaxVal EFlux (in W/m2)', maxval(iono_north_eflux)
 
+        IONO_NORTH_IDIF_NFlux = iono_Ni * 1e06 * 36.26531 *&
+             iono_Ti**0.5 * IDIF_LCF
+        
         ! Loss Cone Factor, as derived in Wolf et al. 1991
         !do j = 1, IONO_nPsi
         !   ! Loss Cone Fraction as a trigonometric relation of MLT
@@ -1224,9 +1233,10 @@ subroutine FACs_to_fluxes(iModel, iBlock)
 
         ! A = 2.5 - To be formalized into PARAMs....
         ! --- Under Construction ---
-        IONO_NORTH_BBND_AVE_E = 0.41 * (poynting * 2.5)**0.03 ! in keV
-        IONO_NORTH_BBND_EFLUX = 2 * (poynting * 2.5)**0.47 ! in mW/m2 or ergs/cm2 
-
+        IONO_NORTH_BBND_AVE_E = 0.41 * (poynting * BBND_LCF)**0.03 ! in keV
+        IONO_NORTH_BBND_EFLUX = 2 * (poynting * BBND_LCF)**0.5 ! in mW/m2 or ergs/cm2 
+        IONO_NORTH_BBND_NFlux = 3E09 * (poynting * BBND_LCF)**0.47 ! in particles/cm2.s
+        
         ! Convert E-Flux to W/m2
         IONO_NORTH_BBND_EFLUX = IONO_NORTH_BBND_EFLUX/1E03
 
@@ -1320,7 +1330,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         ! (2015) and Yu et al. (2016)
         !
         
-        diffuse_nf = iono_Ne * 1e06 * 1553.5632 * iono_T**0.5 ! * 0.15
+        diffuse_nf = iono_Ne * 1e06 * 1553.5632 * iono_T**0.5 * DIFF_LCF
+        IONO_NORTH_DIFF_NFlux = diffuse_nf
         rm = 1.1 !+ 3*SIN(cHalfPi - IONO_NORTH_Theta(i,j))!100
 
         ! Let's have some default values
@@ -1353,6 +1364,9 @@ subroutine FACs_to_fluxes(iModel, iBlock)
               !   write(*,*)'!!! discrete_nf(i,j) = ',discrete_nf(i,j)
               !end if
 
+              ! Loss Cone Factor on Discrete Number Flux
+              discrete_nf(i,j) = discrete_nf(i,j) * MONO_LCF
+              
               ! Set a minimum on diffuse number flux
               ! maximum function can be used above to avoid this
               if (diffuse_nf(i,j) < numflux_floor) then
@@ -1453,6 +1467,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
 
            end do
         end do
+
+        IONO_NORTH_MONO_NFlux = discrete_nf
 
         ! What about the min function?
         where (iono_north_ave_e > 100.0) &
@@ -1770,8 +1786,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         ! Energy Flux
 
         iono_south_eflux = iono_Ne * 1.38e-23 * 1e06 * &
-             1553.5632  * iono_T**1.5 !* &
-             !0.4 ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
+             1553.5632  * iono_T**1.5 * &
+             DIFF_LCF ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
 
         if (DoTest) then
            write(*,*) 'S_Diff: MaxVal Ave_E (in keV)', maxval(iono_south_ave_e)
@@ -1815,10 +1831,13 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         !write(*,*) 'MaxVal Temperature (in K)', maxval(iono_T)
         ! Energy Flux
         ion_eflux = iono_Ni * 1.38e-23 * 1e06 * &
-             36.26531  * iono_Ti**1.5 * 0.4!* &
-        !     !0.5 ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
+             36.26531  * iono_Ti**1.5 * &
+             IDIF_LCF ! Beta = Loss Cone Factor (Can be replaced using same method as in RCM)
         !write(*,*) 'N_Diff: MaxVal EFlux (in W/m2)', maxval(iono_north_eflux)
 
+        IONO_SOUTH_IDIF_NFlux = iono_Ni * 1e06 * 36.26531 *&
+             iono_Ti**0.5 * IDIF_LCF 
+        
         if (DoTest) then
            write(*,*) 'S_Ion: MaxVal Ave_E (in keV)',  maxval(ion_ave_e)
            write(*,*) 'S_Ion: MaxVal EFlux (in W/m2)', maxval(ion_eflux)
@@ -1858,8 +1877,9 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         poynting = IONO_SOUTH_Joule * 0.43395593979143521 ! in W/m2
 
         ! A = 2.5 - To be formalized into PARAMs....
-        IONO_SOUTH_BBND_AVE_E = 0.41 * (poynting * 2.5)**0.03 ! in keV
-        IONO_SOUTH_BBND_EFLUX = 2 * (poynting * 2.5)**0.47 ! in mW/m2 or ergs/cm2 
+        IONO_SOUTH_BBND_AVE_E = 0.41 * (poynting * BBND_LCF)**0.03 ! in keV
+        IONO_SOUTH_BBND_EFLUX = 2 * (poynting * BBND_LCF)**0.5 ! in mW/m2 or ergs/cm2
+        IONO_SOUTH_BBND_NFlux = 3E09 * (poynting * BBND_LCF)**0.47 ! in particles/cm2.s
 
         ! Convert E-Flux to W/m2
         IONO_SOUTH_BBND_EFLUX = IONO_SOUTH_BBND_EFLUX/1E03
@@ -1941,7 +1961,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
         !
 
         ! DISCRETE PRECIP
-        diffuse_nf = iono_Ne * 1e06 * 1553.5632 * iono_T**0.5 ! * 0.15 
+        diffuse_nf = iono_Ne * 1e06 * 1553.5632 * iono_T**0.5 * DIFF_LCF 
+        IONO_SOUTH_DIFF_NFlux = diffuse_nf
         rm = 1.1
 
         ! Set some floorline values
@@ -1969,6 +1990,9 @@ subroutine FACs_to_fluxes(iModel, iBlock)
                  discrete_nf(i,j) = numflux_floor
               end if
 
+              ! Loss Cone Factor on Discrete Number Flux
+              discrete_nf(i,j) = discrete_nf(i,j) * MONO_LCF
+              
               ! Set a minimum on diffuse number flux
               if (diffuse_nf(i,j) < numflux_floor) then
                  diffuse_nf(i,j) = numflux_floor
@@ -2054,6 +2078,8 @@ subroutine FACs_to_fluxes(iModel, iBlock)
            enddo
         enddo
 
+        IONO_SOUTH_MONO_NFlux = discrete_nf
+        
         where (iono_south_ave_e > 100.0) &
           iono_south_ave_e = IONO_Min_Ave_E!100.0
 

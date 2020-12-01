@@ -183,6 +183,14 @@ module ModIonosphere
   real, allocatable :: IONO_SOUTH_IDIF_EFlux(:,:)
   real, allocatable :: IONO_NORTH_BBND_EFlux(:,:)
   real, allocatable :: IONO_SOUTH_BBND_EFlux(:,:)
+  real, allocatable :: IONO_NORTH_DIFF_NFlux(:,:)
+  real, allocatable :: IONO_SOUTH_DIFF_NFlux(:,:)
+  real, allocatable :: IONO_NORTH_MONO_NFlux(:,:)
+  real, allocatable :: IONO_SOUTH_MONO_NFlux(:,:)
+  real, allocatable :: IONO_NORTH_IDIF_NFlux(:,:)
+  real, allocatable :: IONO_SOUTH_IDIF_NFlux(:,:)
+  real, allocatable :: IONO_NORTH_BBND_NFlux(:,:)
+  real, allocatable :: IONO_SOUTH_BBND_NFlux(:,:)
 
   logical, allocatable :: IsFilledWithIm(:,:)
 
@@ -558,15 +566,31 @@ contains
     allocate(IONO_SOUTH_IDIF_EFlux(IONO_nTheta,IONO_nPsi))
     allocate(IONO_NORTH_BBND_EFlux(IONO_nTheta,IONO_nPsi))
     allocate(IONO_SOUTH_BBND_EFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_NORTH_DIFF_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_SOUTH_DIFF_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_NORTH_MONO_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_SOUTH_MONO_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_NORTH_IDIF_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_SOUTH_IDIF_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_NORTH_BBND_NFlux(IONO_nTheta,IONO_nPsi))
+    allocate(IONO_SOUTH_BBND_NFlux(IONO_nTheta,IONO_nPsi))
 
     IONO_NORTH_DIFF_Ave_E = 0.; IONO_NORTH_DIFF_EFlux = 0.
+    IONO_NORTH_DIFF_NFlux = 0.
     IONO_SOUTH_DIFF_Ave_E = 0.; IONO_SOUTH_DIFF_EFlux = 0.
+    IONO_SOUTH_DIFF_NFlux = 0.
     IONO_NORTH_MONO_Ave_E = 0.; IONO_NORTH_MONO_EFlux = 0.
+    IONO_NORTH_MONO_NFlux = 0.
     IONO_SOUTH_MONO_Ave_E = 0.; IONO_SOUTH_MONO_EFlux = 0.
+    IONO_SOUTH_MONO_NFlux = 0.
     IONO_NORTH_IDIF_Ave_E = 0.; IONO_NORTH_IDIF_EFlux = 0.
+    IONO_NORTH_IDIF_NFlux = 0.
     IONO_SOUTH_IDIF_Ave_E = 0.; IONO_SOUTH_IDIF_EFlux = 0.
+    IONO_SOUTH_IDIF_NFlux = 0.
     IONO_NORTH_BBND_Ave_E = 0.; IONO_NORTH_BBND_EFlux = 0.
+    IONO_NORTH_BBND_NFlux = 0.
     IONO_SOUTH_BBND_Ave_E = 0.; IONO_SOUTH_BBND_EFlux = 0.
+    IONO_SOUTH_BBND_NFlux = 0.
     
     allocate(IONO_NORTH_GEO_XyzD(3, IONO_nTheta, IONO_nPsi))
     allocate(IONO_NORTH_GSE_XyzD(3, IONO_nTheta, IONO_nPsi))
@@ -725,6 +749,14 @@ contains
     deallocate(IONO_SOUTH_IDIF_EFlux)
     deallocate(IONO_NORTH_BBND_EFlux)
     deallocate(IONO_SOUTH_BBND_EFlux)
+    deallocate(IONO_NORTH_DIFF_NFlux)
+    deallocate(IONO_SOUTH_DIFF_NFlux)
+    deallocate(IONO_NORTH_MONO_NFlux)
+    deallocate(IONO_SOUTH_MONO_NFlux)
+    deallocate(IONO_NORTH_IDIF_NFlux)
+    deallocate(IONO_SOUTH_IDIF_NFlux)
+    deallocate(IONO_NORTH_BBND_NFlux)
+    deallocate(IONO_SOUTH_BBND_NFlux)
 
     ! Clean up all conductance arrays:
     ! Hall coefficients:
